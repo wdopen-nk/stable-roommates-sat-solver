@@ -22,7 +22,6 @@ From the repository root, use Python 3:
 
 ```powershell
 python main.py instances/satisfiable.json
-python check_input.py
 ```
 
 `main.py` prints the validated rankings. It exits with code 0 for valid input, or prints an error and exits with code 2 for invalid input.
