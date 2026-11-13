@@ -72,24 +72,93 @@ def load_preferences(path):
     return validate_preferences(data)
 
 
+def encode(preferences):
+    """Give each acceptable pair a number and build the CNF clauses."""
+    pairs = []
+
+    for first in sorted(preferences):
+        for second in sorted(preferences[first]):
+            if first < second:  # (A, B) and (B, A) are the same pair.
+                pairs.append((first, second))
+
+    numbers = {}
+
+    for number, pair in enumerate(pairs, 1):
+        numbers[pair] = number
+
+    def variable(first, second):
+        if first > second:
+            first, second = second, first
+
+        return numbers[(first, second)]
+
+    clauses = []
+
+    # An agent cannot belong to two selected pairs.
+    for name, ranked in preferences.items():
+        incident = [variable(name, other) for other in ranked]
+
+        for i in range(len(incident)):
+            for j in range(i + 1, len(incident)):
+                clauses.append([-incident[i], -incident[j]])
+
+    # A pair must be selected unless one endpoint has a preferred partner.
+    for first, second in pairs:
+        clause = [variable(first, second)]
+
+        for other in preferences[first]:
+            if other == second:
+                break
+
+            clause.append(variable(first, other))
+
+        for other in preferences[second]:
+            if other == first:
+                break
+
+            clause.append(variable(second, other))
+            
+        clauses.append(clause)
+
+    return pairs, clauses
+
+
+def dimacs(pairs, clauses):
+    """Format the clauses as a DIMACS CNF file."""
+    lines = [f"p cnf {len(pairs)} {len(clauses)}"]
+
+    for clause in clauses:
+        lines.append(" ".join(str(number) for number in clause) + " 0")
+
+    return "\n".join(lines) + "\n"
+
+
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Validate a Stable Roommates instance")
+    parser = argparse.ArgumentParser(description="Encode Stable Roommates as DIMACS CNF")
+
     parser.add_argument("instance", help="JSON preference file")
+    parser.add_argument("--dimacs", help="save the DIMACS formula to a file")
+
     args = parser.parse_args(argv)
 
     try:
         preferences = load_preferences(args.instance)
+        pairs, clauses = encode(preferences)
+        formula = dimacs(pairs, clauses)
 
-    except InstanceError as error:
+        if args.dimacs:
+            with open(args.dimacs, "w", encoding="ascii", newline="\n") as output:
+                output.write(formula)
+
+            print(f"Wrote {len(pairs)} variables and {len(clauses)} clauses to {args.dimacs}")
+
+        else:
+            print(formula, end="")
+
+    except (InstanceError, OSError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
-
-    print(f"Valid instance with {len(preferences)} agents:")
-
-    for name, ranked in preferences.items():
-        partners = ", ".join(ranked) if ranked else "(none)"
-        print(f"  {name}: {partners}")
-
+    
     return 0
 
 

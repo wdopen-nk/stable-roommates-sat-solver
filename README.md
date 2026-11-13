@@ -22,10 +22,10 @@ From the repository root, use Python 3:
 
 ```powershell
 python main.py instances/satisfiable.json
-python check_input.py
+python main.py instances/satisfiable.json --dimacs instance.cnf
 ```
 
-`main.py` prints the validated rankings. It exits with code 0 for valid input, or prints an error and exits with code 2 for invalid input.
+Without `--dimacs`, `main.py` prints DIMACS to the terminal. With `--dimacs`, it saves an ASCII CNF file and prints its variable and clause counts. The first line of the small satisfiable example is `p cnf 4 8`.
 
 ## Included examples
 
@@ -33,4 +33,4 @@ python check_input.py
 - `instances/unsatisfiable.json`: a three-agent preference cycle with no stable pairing.
 - `instances/incomplete.json`: one acceptable pair and one isolated agent.
 
-<!-- Documentation updated: 2026-11-12 20:08 -->
+<!-- Documentation updated: 2026-11-13 16:03 -->
