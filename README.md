@@ -16,16 +16,16 @@ Save one UTF-8 JSON object. Each key is an agent name, and its value is an order
 
 Names must be unique nonempty strings. A list cannot contain an unknown agent, the agent themself, or the same partner twice. Acceptability must be mutual: if A lists B, B must list A. Empty lists are allowed.
 
-## Current version
-
-From the repository root, use Python 3:
+Use Python 3 and supply a Glucose 4.2.1 executable. Run from the repository root. If the executable is named `glucose` and is on `PATH`, you can omit `--solver`.
 
 ```powershell
-python main.py instances/satisfiable.json
-python main.py instances/satisfiable.json --dimacs instance.cnf
+python main.py instances/satisfiable.json --solver C:\path\to\glucose-simp.exe
+python main.py instances/unsatisfiable.json --solver C:\path\to\glucose-simp.exe
+python main.py instances/incomplete.json --solver C:\path\to\glucose-simp.exe --dimacs instance.cnf --stats
 ```
 
-Without `--dimacs`, `main.py` prints DIMACS to the terminal. With `--dimacs`, it saves an ASCII CNF file and prints its variable and clause counts. The first line of the small satisfiable example is `p cnf 4 8`.
+For SAT, the program prints each pair and any unmatched agents. For UNSAT, it prints `No stable matching exists.` The program sends CNF directly to Glucose through standard input. The `--dimacs` option saves a copy, and `--stats` prints Glucose's comment lines and measured wall time. The satisfiable example's CNF begins with `p cnf 4 8`. Input and solver errors go to stderr with exit code 2.
+
 
 ## Included examples
 
@@ -33,4 +33,4 @@ Without `--dimacs`, `main.py` prints DIMACS to the terminal. With `--dimacs`, it
 - `instances/unsatisfiable.json`: a three-agent preference cycle with no stable pairing.
 - `instances/incomplete.json`: one acceptable pair and one isolated agent.
 
-<!-- Documentation updated: 2026-11-13 16:03 -->
+<!-- Documentation updated: 2026-11-19 11:25 -->
