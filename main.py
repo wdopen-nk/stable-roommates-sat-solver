@@ -4,7 +4,6 @@ import subprocess
 import sys
 import time
 
-
 class InstanceError(ValueError):
     """The input is not a valid instance."""
 
@@ -253,14 +252,17 @@ def parse_output(output, returncode, variable_count, clauses):
     return True, true_variables, statistics
 
 
-def run_glucose(pairs, clauses, executable="glucose", timeout=None):
+def run_glucose(pairs, clauses, executable="glucose", timeout=None, formula=None):
     """Send DIMACS to Glucose and check its answer."""
+    if formula is None:
+        formula = dimacs(pairs, clauses)
+
     start = time.perf_counter()
 
     try:
         completed = subprocess.run(
             [executable, "-model"],
-            input=dimacs(pairs, clauses), capture_output=True,
+            input=formula, capture_output=True,
             text=True, errors="replace", timeout=timeout,
         )
 
@@ -297,13 +299,14 @@ def main(argv=None):
     try:
         preferences = load_preferences(args.instance)
         pairs, clauses = encode(preferences)
+        formula = dimacs(pairs, clauses)
 
         if args.dimacs:
             with open(args.dimacs, "w", encoding="ascii", newline="\n") as output:
-                output.write(dimacs(pairs, clauses))
+                output.write(formula)
 
         satisfiable, true_variables, statistics, elapsed = run_glucose(
-            pairs, clauses, args.solver
+            pairs, clauses, args.solver, formula=formula
         )
 
         if satisfiable:
