@@ -33,4 +33,26 @@ For SAT, the program prints each pair and any unmatched agents. For UNSAT, it pr
 - `instances/unsatisfiable.json`: a three-agent preference cycle with no stable pairing.
 - `instances/incomplete.json`: one acceptable pair and one isolated agent.
 
-<!-- Documentation updated: 2026-11-19 11:25 -->
+## Benchmark experiment
+
+Run the reproducible search with your Glucose executable:
+
+```powershell
+python check_benchmark.py
+python benchmark.py --solver C:\path\to\glucose-simp.exe
+```
+
+The benchmark generates complete mutual preference lists for 20, 40, 80, and 120 agents, using seeds 0 through 4 at each size. It prints CSV rows with the number of variables and clauses, Python encoding time (clauses plus DIMACS text), Glucose wall time, and SAT/UNSAT status. Each Glucose call has a 45-second timeout. The search stops at the first SAT case taking at least 10 seconds. `--save-hard path.json` optionally saves that case.
+
+I ran this search with Python 3.14.3 and Glucose 4.2.1:
+
+| Agents | Seeds tried | Variables | Clauses | SAT / UNSAT | Encoding time | Glucose wall time |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| 20 | 0–4 | 190 | 3,610 | 4 / 1 | 0.003507–0.006435 s | 0.024069–0.309984 s |
+| 40 | 0–4 | 780 | 30,420 | 4 / 1 | 0.031536–0.048185 s | 0.082217–0.117414 s |
+| 80 | 0–4 | 3,160 | 249,640 | 2 / 3 | 0.289471–0.902647 s | 1.464496–1.699169 s |
+| 120 | 0 | 7,140 | 849,660 | 1 / 0 | 2.619039 s | 22.983321 s |
+
+The qualifying SAT case is `generate(120, 1.0, 0)` in `benchmark.py`. No large JSON file is included. Times vary by machine and load.
+
+<!-- Documentation updated: 2026-11-23 16:20 -->
