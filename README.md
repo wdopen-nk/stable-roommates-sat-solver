@@ -2,6 +2,26 @@
 
 This Python 3 program decides whether a stable roommates matching exists and prints one when it does. It asks whether a group of agents can be paired without a *blocking pair*: two agents who both prefer each other to their assigned partners. Preference lists are strict, can be incomplete, and must be mutually acceptable. A stable matching need not exist. The program turns the question into Boolean satisfiability (SAT), writes the formula in DIMACS CNF, runs an external Glucose 4.2.1 executable, and translates a satisfying assignment into pairs.
 
+## Mathematical model and CNF encoding
+
+Let `V` be the set of agents. Each agent `i` gives a strict ordered list `P(i)` of acceptable partners. If `j` is in `P(i)`, then `i` must be in `P(j)`. An unmatched agent prefers every acceptable partner to remaining unmatched. Let `E` contain each mutually acceptable unordered pair once.
+
+A matching `M` is a subset of `E` in which each agent occurs in at most one pair. An acceptable pair `(i, j)` blocks `M` when it is not in `M` and both agents prefer each other to their current partners (or are unmatched). The problem is to decide whether a matching with no blocking pair exists and, if it does, output one.
+
+The program creates one Boolean variable `x(i,j)` for each pair in `E`. It is true exactly when that pair is selected. For each agent `i` and each two distinct acceptable partners `j` and `k`, it adds a clause saying `NOT x(i,j) OR NOT x(i,k)`. This prevents an agent from being matched twice.
+
+For every acceptable pair `(i,j)`, it also adds this stability clause:
+
+```text
+x(i,j)
+OR x(i,k) for every k that i ranks above j
+OR x(j,l) for every l that j ranks above i
+```
+
+If `(i,j)` is not selected, the clause requires at least one endpoint to have a partner they prefer. Thus `(i,j)` cannot block. There is no clause forcing every agent to have a partner: an unmatched agent is allowed when the matching is stable. Every satisfying assignment therefore describes a stable matching, and every stable matching satisfies the clauses. The program checks the returned assignment against both the CNF and the original rankings before printing it.
+
+With `d(i)` acceptable partners for agent `i`, this encoding has `|E|` variables and `|E| + sum over i of d(i) * (d(i) - 1) / 2` clauses. The complete-list case grows cubically in the number of agents. One alternative is a sequential counter for the at-most-one constraint: it uses extra variables and roughly linear space per agent instead of all partner pairs. That can reduce large formulas, but makes the implementation and DIMACS mapping less direct. Requiring exactly one partner is another possible model for complete matchings, but would incorrectly reject valid stable matchings with unmatched agents here.
+
 ## Input format
 
 Save one UTF-8 JSON object. Each key is an agent name, and its value is an ordered list of acceptable partners:
@@ -24,21 +44,28 @@ python main.py instances/unsatisfiable.json --solver C:\path\to\glucose-simp.exe
 python main.py instances/incomplete.json --solver C:\path\to\glucose-simp.exe --dimacs instance.cnf --stats
 ```
 
-For SAT, the program prints each pair and any unmatched agents. For UNSAT, it prints `No stable matching exists.` The program sends CNF directly to Glucose through standard input. The `--dimacs` option saves a copy, and `--stats` prints Glucose's comment lines and measured wall time. The satisfiable example's CNF begins with `p cnf 4 8`. Input and solver errors go to stderr with exit code 2.
+The satisfiable example prints:
 
+```text
+Stable matching found:
+  A - B
+  C - D
+Unmatched: none
+```
+
+The unsatisfiable example prints `No stable matching exists.` The incomplete example prints `A - B` and `Unmatched: C`. The program sends CNF directly to Glucose through standard input. The `--dimacs` option saves a copy, and `--stats` prints Glucose's comment lines and measured wall time. DIMACS starts with `p cnf <variables> <clauses>` where each following line is one clause using positive or negative variable numbers and ends in `0`. For example, the satisfiable instance starts with `p cnf 4 8`. Input and solver errors go to stderr with exit code 2.
 
 ## Included examples
 
-- `instances/satisfiable.json`: four agents with a stable pairing.
-- `instances/unsatisfiable.json`: a three-agent preference cycle with no stable pairing.
-- `instances/incomplete.json`: one acceptable pair and one isolated agent.
+- `instances/satisfiable.json`: four agents given where `(A,B)` and `(C,D)` form a stable matching.
+- `instances/unsatisfiable.json`: three agents form a preference cycle. Any matching leaves one unmatched agent and has a blocking pair.
+- `instances/incomplete.json`: `(A,B)` is the only acceptable pair; `C` is unmatched.
 
 ## Benchmark experiment
 
 Run the reproducible search with your Glucose executable:
 
-```powershell
-python check_benchmark.py
+```
 python benchmark.py --solver C:\path\to\glucose-simp.exe
 ```
 
@@ -53,6 +80,6 @@ I ran this search with Python 3.14.3 and Glucose 4.2.1:
 | 80 | 0–4 | 3,160 | 249,640 | 2 / 3 | 0.289471–0.902647 s | 1.464496–1.699169 s |
 | 120 | 0 | 7,140 | 849,660 | 1 / 0 | 2.619039 s | 22.983321 s |
 
-The qualifying SAT case is `generate(120, 1.0, 0)` in `benchmark.py`. No large JSON file is included. Times vary by machine and load.
+The qualifying SAT case is `generate(120, 1.0, 0)` in `benchmark.py`. Times vary by machine and load, and the result does not imply every 120-agent instance finishes in this time.
 
-<!-- Documentation updated: 2026-11-23 16:20 -->
+<!-- Documentation updated: 2026-11-25 18:52 -->
