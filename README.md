@@ -22,7 +22,9 @@ If `(i,j)` is not selected, the clause requires at least one endpoint to have a 
 
 With `d(i)` acceptable partners for agent `i`, this encoding has `|E|` variables and `|E| + sum over i of d(i) * (d(i) - 1) / 2` clauses. The complete-list case grows cubically in the number of agents. One alternative is a sequential counter for the at-most-one constraint: it uses extra variables and roughly linear space per agent instead of all partner pairs. That can reduce large formulas, but makes the implementation and DIMACS mapping less direct. Requiring exactly one partner is another possible model for complete matchings, but would incorrectly reject valid stable matchings with unmatched agents here.
 
-## Input format
+## User guide
+
+### Input format
 
 Save one UTF-8 JSON object. Each key is an agent name, and its value is an ordered list of acceptable partners:
 
@@ -36,6 +38,8 @@ Save one UTF-8 JSON object. Each key is an agent name, and its value is an order
 
 Names must be unique nonempty strings. A list cannot contain an unknown agent, the agent themself, or the same partner twice. Acceptability must be mutual: if A lists B, B must list A. Empty lists are allowed.
 
+### How To Run
+
 Use Python 3 and supply a Glucose 4.2.1 executable. Run from the repository root. If the executable is named `glucose` and is on `PATH`, you can omit `--solver`.
 
 ```powershell
@@ -44,7 +48,9 @@ python main.py instances/unsatisfiable.json --solver C:\path\to\glucose-simp.exe
 python main.py instances/incomplete.json --solver C:\path\to\glucose-simp.exe --dimacs instance.cnf --stats
 ```
 
-The satisfiable example prints:
+### Output
+
+For a satisfiable instance, the script prints the pairs and any unmatched agents. For example, `instances/satisfiable.json` prints:
 
 ```text
 Stable matching found:
@@ -75,11 +81,12 @@ I ran this search with Python 3.14.3 and Glucose 4.2.1:
 
 | Agents | Seeds tried | Variables | Clauses | SAT / UNSAT | Encoding time | Glucose wall time |
 | ---: | --- | ---: | ---: | ---: | ---: | ---: |
-| 20 | 0–4 | 190 | 3,610 | 4 / 1 | 0.003507–0.006435 s | 0.024069–0.309984 s |
-| 40 | 0–4 | 780 | 30,420 | 4 / 1 | 0.031536–0.048185 s | 0.082217–0.117414 s |
-| 80 | 0–4 | 3,160 | 249,640 | 2 / 3 | 0.289471–0.902647 s | 1.464496–1.699169 s |
-| 120 | 0 | 7,140 | 849,660 | 1 / 0 | 2.619039 s | 22.983321 s |
+| 20 | 0–4 | 190 | 3,610 | 4 / 1 | 0.002315-0.003831 s | 0.024069–0.309984 s |
+| 40 | 0–4 | 780 | 30,420 | 4 / 1 |  0.025463-0.029313 s | 0.082217–0.117414 s |
+| 80 | 0–4 | 3,160 | 249,640 | 2 / 3 |  0.218970-0.252352 s | 1.193672-1.257597 s |
+| 120 | 0-4 | 7,140 | 849,660 | 3 / 1 | 0.791831-0.869535 s | 8.238213-8.698314 s |
+| 130 | 0 | 8,385 | 1,081,665 | 1 / 0 | 1.072217 s | 12.026799 s |
 
-The qualifying SAT case is `generate(120, 1.0, 0)` in `benchmark.py`. Times vary by machine and load, and the result does not imply every 120-agent instance finishes in this time.
+The qualifying SAT case is `generate(130, 1.0, 0)` in `benchmark.py`. Times vary by machine and load, and the result does not imply every 120-agent instance finishes in this time.
 
-<!-- Documentation updated: 2026-11-25 18:52 -->
+<!-- Documentation updated: 2026-11-27 23:44 -->
