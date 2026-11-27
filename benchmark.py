@@ -6,7 +6,7 @@ import time
 
 from main import SolverError, decode, dimacs, encode, is_stable, run_glucose
 
-SIZES = (20, 40, 80, 120)
+SIZES = (20, 40, 80, 120, 130)
 SEEDS = range(5)
 DENSITY = 1.0
 TARGET_SECONDS = 10.0
